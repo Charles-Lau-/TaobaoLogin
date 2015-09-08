@@ -52,6 +52,22 @@ def format_long_str(_str):
 ua = format_long_str(ua)
 encrypted_password = format_long_str(encrypted_password)
 
+#异常类 
+class WrongCheckcode(Exception):
+	def __str__(self):
+		print u'验证码输入错误' 
+
+class GetJtokenFailed(Exception):
+	def __str__(self):
+		print u'Jtoken获取失败'
+
+class GetStFailed(Exception):
+	def __str__(self):
+		print u'st获取失败'
+
+class LoginFailed(Exception):
+	def __str__(self):
+		print u'登陆失败'
 #主类
 class Taobao:
     headers ={
@@ -130,8 +146,7 @@ class Taobao:
         """
         wrong_checkcode_pattern = re.compile(u'\u9a8c\u8bc1\u7801\u9519\u8bef',re.S)
         if re.search(wrong_checkcode_pattern,content):
-            print u'验证码错误'
-            exit(-1)
+            raise WrongCheckcode()
 
     def _check_Jtoken(self,content):
         """
@@ -145,8 +160,7 @@ class Taobao:
             print u"JTOKEN 获取成功"
         except:
             #匹配失败，J_Token获取失败
-            print u"J_Token获取失败"
-            exit(-1)
+	    raise GetJtokenFailed()
 
     def _get_ST(self):
         """
@@ -164,9 +178,8 @@ class Taobao:
             print u"成功获取st码"
             
         except:
-            print u"未匹配到st"
-            exit(1)
-            
+            raise GetStFailed()
+
     def _login(self):
         #第一次登陆
         first_response = requests.post(url,data=self.params,headers=self.headers)
@@ -204,9 +217,8 @@ class Taobao:
             print u"登录网址成功"
             return True
         except:
-            print "登录失败"
-            exit(-1)
-            
+            raise LoginFailed()
+
     def login(self):
         """
             通过_login 来获取 ST， 然后直接在这个函数里面登陆,并设定登陆后的self.cookie
