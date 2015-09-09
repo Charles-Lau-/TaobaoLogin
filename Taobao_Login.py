@@ -14,6 +14,7 @@ import webbrowser
 url = 'https://login.taobao.com/member/login.jhtml'
 username = '554128639@qq.com'
 password = '911010com'
+
 #ua是淘宝根据复杂的算法算得的，每次都不同
 ua = """076UW5TcyMNYQwiAiwTR3tCf0J/QnhEcUpkMmQ=|Um5OcktyTnVKcE52SHxBfCo=|U2xMHDJ
         +H2QJZwBxX39Rb1t1VXsnRiBMK1UvAVcB|VGhXd1llXGVZYl1nWWFfa1ZrXGFDe0d5Q3tCeE
@@ -35,6 +36,7 @@ ua = """076UW5TcyMNYQwiAiwTR3tCf0J/QnhEcUpkMmQ=|Um5OcktyTnVKcE52SHxBfCo=|U2xMHDJ
         BCQaJREqFEIU|S3JPclJvT3BQbFVpSXdPdVVtWXlDe1tnW2JCfl5iWWREek5uW29PcUtrVW5
         Ock5uUGlJd0lpV2hIdkpqS3VVbU1yR2dYYkJ9XWJaekV8Kg==
       """
+
 #RSA后的密码，实际被提交到服务器的也是这个密码，加密的key和ua相关，所以每次都不同
 encrypted_password = """
         8fbf8c5438808118e6896a352730468a8bd8bb350f6ca14dd9a27bb
@@ -42,11 +44,13 @@ encrypted_password = """
         b9fc2857d52c0042ccbe7c26ad354af57c275f8a3e3b854c5863045de83f6e3079053da7e986feb
         72a7c3079b601b0f0fd2125128ae5edff1db6dc34aa"""
 
+
 def format_long_str(_str):
     """
         格式化 ua 和加密后的密码
         
     """
+
     return ''.join(_str.split('\n')).strip().replace(' ','')
 
 ua = format_long_str(ua)
@@ -57,19 +61,30 @@ class WrongCheckcode(Exception):
 	def __str__(self):
 		print u'验证码输入错误' 
 
+
+class RetrieveCheckcodeFailed(Exception):
+	def __str__(self):
+		print u'获取验证码失败'
+
+
 class GetJtokenFailed(Exception):
 	def __str__(self):
 		print u'Jtoken获取失败'
+
 
 class GetStFailed(Exception):
 	def __str__(self):
 		print u'st获取失败'
 
+
 class LoginFailed(Exception):
 	def __str__(self):
 		print u'登陆失败'
+
+
 #主类
 class Taobao:
+
     headers ={
                 'Host':'login.taobao.com',
                 'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:39.0) Gecko/20100101 Firefox/39.0',
@@ -131,12 +146,14 @@ class Taobao:
         """
             更新header
         """
+
         self.headers = dict(self.headers,**params)
 
     def setParams(self,params):
         """
             更新post过去的参数
         """
+
         self.params = dict(self.params,**params)
 
 
@@ -144,6 +161,7 @@ class Taobao:
         """
             判断输入的验证码是否正确
         """
+
         wrong_checkcode_pattern = re.compile(u'\u9a8c\u8bc1\u7801\u9519\u8bef',re.S)
         if re.search(wrong_checkcode_pattern,content):
             raise WrongCheckcode()
@@ -152,6 +170,7 @@ class Taobao:
         """
             判断JToken是否存在
         """
+
         tokenPattern = re.compile('id="J_HToken" value="(.*?)"')
         tokenMatch = re.search(tokenPattern,content)
         #如果匹配成功，找到了J_HToken
@@ -166,6 +185,7 @@ class Taobao:
         """
             通过JTOKEN 来获取ST
         """
+
         tokenURL = 'https://passport.alipay.com/mini_apply_st.js?site=0&token=%s&callback=stCallback6' % self.Jtoken
         st_response = requests.get(tokenURL,headers=self.headers)
         #处理st，获得用户淘宝主页的登录地址
@@ -181,7 +201,10 @@ class Taobao:
             raise GetStFailed()
 
     def _login(self):
-        #第一次登陆
+	"""
+		第一次登陆
+	"""
+
         first_response = requests.post(url,data=self.params,headers=self.headers)
         #判断是否登陆被拒绝 并被要求提交邀请码
         need_checkcode_pattern = re.compile(u'\u8bf7\u8f93\u5165\u9a8c\u8bc1\u7801',re.S)
@@ -210,6 +233,7 @@ class Taobao:
         """
             检测是否登陆成功 如果成功就设置cookies
         """
+
         pattern = re.compile('top.location = "(.*?)"',re.S)
         match = re.search(pattern,content)
         try:
@@ -224,6 +248,7 @@ class Taobao:
             通过_login 来获取 ST， 然后直接在这个函数里面登陆,并设定登陆后的self.cookie
             用来备用
         """
+
         self._login()
         stURL = 'https://login.taobao.com/member/vst.htm?st=%s&TPL_username=%s' % (self.st,username)
         #更新header
@@ -235,7 +260,10 @@ class Taobao:
         
             
     def getCheckcode(self,page):
-        #得到验证码的图片
+        """
+		得到验证码的图片
+	"""
+
         pattern = re.compile('<img id="J_StandardCode_m.*?data-src="(.*?)"',re.S)
         #匹配的结果
         matchResult = re.search(pattern,page)
@@ -243,8 +271,7 @@ class Taobao:
         if matchResult and matchResult.group(1): 
             return matchResult.group(1)
         else:
-            print u"没有找到验证码内容,登陆失败"
-            exit(-1)
+	    raise RetrieveCheckcodeFailed()
 
 if __name__ == '__main__':
     t = Taobao()

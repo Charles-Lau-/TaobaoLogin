@@ -1,3 +1,7 @@
-这是个用于淘宝自动登陆的脚本
+A taobao login project, which contains both Idea-Jave version and Python version
 =======================================
-详细用法见脚本里面的文档注释
+Defects:
+	For every user, the encrypted password and corresponding UA value must be catched in the browser
+
+	If checkcode is required, it must be solved manually.
+
