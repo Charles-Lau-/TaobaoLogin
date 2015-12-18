@@ -13,7 +13,7 @@ import webbrowser
 
 url = 'https://login.taobao.com/member/login.jhtml'
 username = '554128639@qq.com'
-password = '911010com'
+password = ''
 
 #ua是淘宝根据复杂的算法算得的，每次都不同
 ua = """076UW5TcyMNYQwiAiwTR3tCf0J/QnhEcUpkMmQ=|Um5OcktyTnVKcE52SHxBfCo=|U2xMHDJ
